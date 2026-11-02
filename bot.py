@@ -105,6 +105,7 @@ async def myid_handler(message: Message) -> None:
             (idtg, name),
         )
     con.commit()
+    print (f"отдал на запись {idtg} {name}")
     con.close()
 
 @router.message(F.text)
