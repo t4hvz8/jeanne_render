@@ -61,7 +61,7 @@ ROLE_URL = os.getenv("ROLE_URL")
 ROLE_TOKEN = os.getenv("ROLE_TOKEN")
 
 #  настройки вебхука
-BASE_WEBHOOK_URL = os.getenv("RENDER_EXTERNAL_URL", "https://your-app.onrender.com")
+BASE_WEBHOOK_URL = os.getenv("RENDER_EXTERNAL_URL", "https://render-2-v6lm.onrender.com")
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "my-secret-token")
 WEB_SERVER_HOST = "0.0.0.0"
