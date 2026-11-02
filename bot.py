@@ -18,7 +18,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from pathlib import Path
 
-from dotenv import load_dotenv
+
 
 
 # --- Корневая папка = папка, где лежит этот скрипт ---
@@ -52,7 +52,6 @@ def ensure_directories() -> None:
 os.chdir(BASE_DIR)
 
 # Загружаем .env именно из корневой папки бота (не из cwd!)
-load_dotenv(dotenv_path=BASE_DIR / ".env")
 
 
 # --- Конфигурация ---
