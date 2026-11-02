@@ -60,12 +60,12 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 ROLE_URL = os.getenv("ROLE_URL")
 ROLE_TOKEN = os.getenv("ROLE_TOKEN")
 
-# !ЗАКОМИЧЕНО: настройки вебхука
-# BASE_WEBHOOK_URL = os.getenv("RENDER_EXTERNAL_URL", "https://your-app.onrender.com")
-# WEBHOOK_PATH = "/webhook"
-# WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "my-secret-token")
-# WEB_SERVER_HOST = "0.0.0.0"
-# WEB_SERVER_PORT = int(os.getenv("PORT", 10000))
+#  настройки вебхука
+BASE_WEBHOOK_URL = os.getenv("RENDER_EXTERNAL_URL", "https://your-app.onrender.com")
+WEBHOOK_PATH = "/webhook"
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "my-secret-token")
+WEB_SERVER_HOST = "0.0.0.0"
+WEB_SERVER_PORT = int(os.getenv("PORT", 10000))
 
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 
@@ -80,57 +80,6 @@ DATA_DIR.mkdir(exist_ok=True)  # создаём папку data рядом со 
 # --- Роутер и хендлеры ---
 router = Router()
 
-# Базы данных
-with sqlite3.connect('data/bd/role.db') as con:
-    cur = con.cursor()
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS admins(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            idtg VARCHAR (200),
-            name VARCHAR (200),
-            nick  VARCHAR (200)
-            )''')
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS chan(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chan_name VARCHAR (200),
-            chan_idtg VARCHAR (200),
-            chan_link  VARCHAR (200),
-            chan_count  VARCHAR (200)
-            )''')
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS task(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            task VARCHAR (200),
-            setup VARCHAR (200),
-            setup2  VARCHAR (200),
-            setup3  VARCHAR (200)
-            )''')
-    con.commit()
-    cur.close()
-with sqlite3.connect('data/bd/giveaway.db') as con:
-    cur = con.cursor()
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS giveaways_data(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chan_name VARCHAR (200),
-            chan_id VARCHAR (200),
-            chan_link VARCHAR (200),
-            msg_id VARCHAR (200),
-            giveaway_status VARCHAR (200),
-            giveaway_end  VARCHAR (200)
-            )''')
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS tributes(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_tg VARCHAR (200),
-            us_nick VARCHAR (200),
-            us_name VARCHAR (200),
-            podpis VARCHAR (200),
-            us_ava VARCHAR (200)
-            )''')
-    con.commit()
-    cur.close()
 
 
 
@@ -179,12 +128,12 @@ scheduler: AsyncIOScheduler | None = None
 async def on_startup(bot: Bot) -> None:
     global scheduler
 
-    # !ЗАКОМИЧЕНО: установка вебхука
-    # await bot.set_webhook(
-    #     f"{BASE_WEBHOOK_URL}{WEBHOOK_PATH}",
-    #     secret_token=WEBHOOK_SECRET,
-    #     drop_pending_updates=True,
-    # )
+    #  установка вебхука
+    await bot.set_webhook(
+        f"{BASE_WEBHOOK_URL}{WEBHOOK_PATH}",
+        secret_token=WEBHOOK_SECRET,
+        drop_pending_updates=True,
+    )
 
     # Удаляем ранее установленный вебхук, иначе polling не заработает
     await bot.delete_webhook(drop_pending_updates=True)
@@ -232,27 +181,22 @@ def role_db():
     return con
 
 
-async def main() -> None:
-    setup_logging()
-    logging.info("BASE_DIR = %s", BASE_DIR)
-    ensure_directories()
-
-    if not BOT_TOKEN:
-        raise ValueError("BOT_TOKEN не найден. Проверьте .env в папке бота.")
+def main():
+    logging.basicConfig(level=logging.INFO)
 
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
     dp.include_router(router)
-
     dp.startup.register(on_startup)
-    dp.shutdown.register(on_shutdown)
 
-    # !ЗАКОМИЧЕНО: весь блок вебхука
-    # app = web.Application()
-    # webhook_requests_handler = SimpleRequestHandler(...)
-    # ...
+    app = web.Application()
+    handler = SimpleRequestHandler(dispatcher=dp, bot=bot, secret_token=WEBHOOK_SECRET)
+    handler.register(app, path=WEBHOOK_PATH)
+    setup_application(app, dp, bot=bot)
 
-    await dp.start_polling(bot)
+    app.router.add_get("/", lambda r: web.Response(text="OK"))
+
+    web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
 
 
 if __name__ == "__main__":
